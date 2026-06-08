@@ -8,6 +8,9 @@ from salesforce_cases import (
     create_case, update_case_with_summary, close_case
 )
 from logger import get_logger
+from rag_pipeline import retrieve_context
+
+import time
 
 load_dotenv()
 log = get_logger("salesforce_agent")
@@ -120,10 +123,14 @@ You are a Salesforce CRM agent for a contact center.
 You help agents and supervisors manage Cases by taking actions on their behalf.
 
 You have access to tools to read, create, update, and close Salesforce Cases.
-When given an instruction, use the appropriate tool to execute it.
-After executing, confirm what was done in one clear sentence.
+You also receive relevant policy documents to ground your responses.
 
-Be concise. Be specific. Always confirm the action taken with the Case number or ID.
+When given an instruction:
+1. Use the policy documents provided to inform your Next Best Action recommendation
+2. Use the appropriate tool to execute the CRM action
+3. After executing, confirm what was done and include a policy-grounded NBA suggestion
+
+Be concise. Always reference the relevant policy when making NBA suggestions.
 """
 
 def execute_tool(tool_name: str, tool_args: dict) -> str:
@@ -177,20 +184,42 @@ def execute_tool(tool_name: str, tool_args: dict) -> str:
         return f"Unknown tool: {tool_name}"
 
 
-def run_agent(instruction: str) -> str:
-    """
-    Takes a natural language instruction.
-    Uses LLM to decide which Salesforce action to take.
-    Executes it. Returns confirmation.
-    """
+
+def run_agent(instruction: str, retries: int = 3) -> str:
+    for attempt in range(1, retries + 1):
+        try:
+            return _run_agent_once(instruction)
+        except Exception as e:
+            if attempt < retries:
+                log.warning(f"run_agent | attempt={attempt} | error={e} | retrying in 2s")
+                time.sleep(2)
+            else:
+                raise
+
+
+def _run_agent_once(instruction: str) -> str:
+    
     log.info(f"run_agent | instruction={instruction[:80]}")
+
+    # Retrieve relevant policy documents
+    policy_context = retrieve_context(instruction, top_k=2)
+    log.info(f"run_agent | rag_context_retrieved | length={len(policy_context)}")
+
+    # Inject policy context into the user message
+    enriched_instruction = f"""
+{instruction}
+
+{policy_context}
+
+Use the policy documents above to ground your NBA recommendation.
+"""
 
     messages = [
         {"role": "system", "content": AGENT_SYSTEM_PROMPT},
-        {"role": "user",   "content": instruction}
+        {"role": "user",   "content": enriched_instruction}
     ]
 
-    # Step 1 — LLM decides which tool to call
+    # Rest of the function stays the same
     response = client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
@@ -201,12 +230,10 @@ def run_agent(instruction: str) -> str:
 
     message = response.choices[0].message
 
-    # Step 2 — if no tool called, return direct response
     if not message.tool_calls:
         log.info(f"run_agent | no_tool_called | direct_response")
         return message.content
 
-    # Step 3 — execute the tool
     tool_call   = message.tool_calls[0]
     tool_name   = tool_call.function.name
     tool_args   = json.loads(tool_call.function.arguments)
@@ -215,7 +242,6 @@ def run_agent(instruction: str) -> str:
     tool_result = execute_tool(tool_name, tool_args)
     log.info(f"run_agent | tool_result={tool_result[:100]}")
 
-    # Step 4 — send result back to LLM for natural language confirmation
     messages.append({"role": "assistant", "content": None, "tool_calls": message.tool_calls})
     messages.append({
         "role":         "tool",
@@ -231,5 +257,8 @@ def run_agent(instruction: str) -> str:
     )
 
     result = final.choices[0].message.content
-    log.info(f"run_agent | complete | result={result[:100]}")
+    if result is None:
+    # Model called another tool — extract tool result as response
+        result = tool_result
+        log.info(f"run_agent | complete | result={result[:100]}")
     return result
