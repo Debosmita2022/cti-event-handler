@@ -106,13 +106,13 @@ docker-compose up -d
 
 ### Prompt Engineering — CoT vs Direct (10 transcripts)
 
-| Dimension             | Direct | CoT     |
-|-----------------------|--- ----|---------|
-| Overall               | 9.3    | 9.6     |
-| Sentiment correctness | 8.9    | 9.6     |
-| NBA specificity       | 8.4    | 8.6     |
-| Issue accuracy        | 10.0   | 10.0    |
-| Escalation accuracy   | 10.0   | 10.0    |
+|               Dimension                   | Direct | CoT     |
+|-------------------------------------------|--------|---------|
+| Overall                                   | 9.3    | 9.6     |
+| Sentiment correctness                     | 8.9    | 9.6     |
+| NBA specificity                           | 8.4    | 8.6     |
+| Issue accuracy                            | 10.0   | 10.0    |
+| Escalation accuracy                       | 10.0   | 10.0    |
 
 CoT wins on 6/10 transcripts. Biggest gap: sentiment correctness on ambiguous calls — retention events and partial resolutions where direct prompting misread lukewarm acceptance as positive.
 
