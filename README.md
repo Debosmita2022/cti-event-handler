@@ -141,13 +141,13 @@ CoT wins on 6/10 transcripts. Biggest gap: sentiment correctness on ambiguous ca
 ## Environment Variables
 
 # See .env.example for full list
-CTI_API_KEY=             # inbound API key for CTI endpoints
-OPENAI_API_KEY=          # GPT-4o for LLM inference and agent
-SALESFORCE_USERNAME=     # Salesforce org username
-SALESFORCE_PASSWORD=     # Salesforce org password
-SALESFORCE_SECURITY_TOKEN= # Salesforce security token
-JWT_SECRET=              # min 32 chars for JWT signing
-SRM_BASE_URL=            # SRM endpoint (httpbin for dev)
+        CTI_API_KEY= inbound API key for CTI endpoints
+        OPENAI_API_KEY=# GPT-4o for LLM inference and agent
+        SALESFORCE_USERNAME=# Salesforce org username
+        SALESFORCE_PASSWORD=# Salesforce org password
+        SALESFORCE_SECURITY_TOKEN= # Salesforce security token
+        JWT_SECRET=# min 32 chars for JWT signing
+        SRM_BASE_URL=# SRM endpoint (httpbin for dev)
 
 
 ## Background
