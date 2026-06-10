@@ -155,3 +155,7 @@ CoT wins on 6/10 transcripts. Biggest gap: sentiment correctness on ambiguous ca
 Built to demonstrate production-grade Agentic AI engineering — connecting hands-on Uniphore U-Assist production experience (multi-brand intent recognition, CTI/SIP event handling, multi-site deployment) with Python implementation of the same pipeline from first principles.
 
 The architecture mirrors U-Assist's post-call pipeline: CTI event receiver → context enrichment → LLM summary service → SRM integration → ACW automation. Understanding both the platform and the code means debugging at any layer without waiting for vendor support.
+
+
+## Demo
+[▶ Watch demo](https://youtu.be/BkqaS-0Ro1Y?si=1Hqx5Z6xt2ixy1u2)
